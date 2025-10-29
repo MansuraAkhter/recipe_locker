@@ -34,20 +34,28 @@ async def generate_recipe(link: str):
     url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet&id={VIDEO_ID}&key={API_KEY}"
     response = requests.get(url)
     data = response.json()
+        # Get video transcript
+    try:
+        transcript = YouTubeTranscriptApi().fetch(VIDEO_ID)
+        # Extract text from snippets
+        if hasattr(transcript, 'snippets'):
+            # New structure with snippets attribute
+            text_parts = [snippet.text for snippet in transcript.snippets]
+            # Create paragraph
+            transcript_text = " ".join(text_parts)
+    except Exception as e:
+        transcript_text = "Transcript not available for this video."
+        print(e)
    # Extract description
     if 'items' in data and len(data['items']) > 0:
         description = data['items'][0]['snippet']['description']
         title = data['items'][0]['snippet']['title']
     
-        # Extract transcript
-        # transcript = YouTubeTranscriptApi.get_transcript(VIDEO_ID)
-        # for entry in transcript:
-        #     print(entry['text'])
 
         RECIPIES.append({
             'title': title,
             'procedure': description,
-            # 'transcript': transcript,
+            'transcript': transcript_text,
         })
         return {
             'message': 'recipe generated successfully',
